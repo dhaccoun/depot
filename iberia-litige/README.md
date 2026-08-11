@@ -15,7 +15,7 @@ Dans ce dossier du dépôt :
 powershell -ExecutionPolicy Bypass -File .\SYNC-FROM-ONEDRIVE.ps1
 ```
 
-Le script lit `OneDrive\Documents\iberia litige`, prépare un ZIP sur le Bureau, **sans** le pousser sur GitHub (le dépôt `dhaccoun/depot` est **public**).
+Le script lit d’abord `C:\iberia litige` (puis OneDrive\Documents\…), prépare un ZIP sur le Bureau, **sans** le pousser sur GitHub (le dépôt `dhaccoun/depot` est **public**).
 
 Puis glissez le ZIP dans le chat de l’agent :  
 https://cursor.com/agents/bc-5128b421-9be3-4c02-b66a-0f295b0d0d8a
