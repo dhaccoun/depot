@@ -4,12 +4,19 @@
 
 $ErrorActionPreference = "Stop"
 
-$Source = Join-Path $env:USERPROFILE "OneDrive\Documents\iberia litige"
-if (-not (Test-Path -LiteralPath $Source)) {
-  $Source = Join-Path $env:OneDrive "Documents\iberia litige"
+$Candidates = @(
+  "C:\iberia litige",
+  (Join-Path $env:USERPROFILE "OneDrive\Documents\iberia litige"),
+  (Join-Path $env:OneDrive "Documents\iberia litige"),
+  (Join-Path $env:USERPROFILE "Documents\iberia litige")
+) | Where-Object { $_ -and $_.Trim() -ne "" }
+
+$Source = $null
+foreach ($c in $Candidates) {
+  if (Test-Path -LiteralPath $c) { $Source = $c; break }
 }
-if (-not (Test-Path -LiteralPath $Source)) {
-  Write-Error "Dossier introuvable. Verifiez: $env:USERPROFILE\OneDrive\Documents\iberia litige"
+if (-not $Source) {
+  Write-Error ("Dossier introuvable. Chemins testes:`n - " + ($Candidates -join "`n - "))
 }
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
