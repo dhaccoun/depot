@@ -1,0 +1,10 @@
+# Ignore personal claim documents (public repo)
+inbox/**
+!inbox/.gitkeep
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.heic
+*.zip
+!SYNC-FROM-ONEDRIVE.ps1
