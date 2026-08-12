@@ -1,0 +1,14 @@
+# Documents personnels — dépôt public : ne pas pousser le contenu de C:\fincut
+inbox/**
+!inbox/.gitkeep
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.heic
+*.zip
+*.docx
+!SYNC-FROM-WINDOWS.ps1
+# Garder les modèles de réponse générés par l'agent
+!Fincut_Reponse_SAV_David_Haccoun.docx
+!Fincut_Reponse_SAV_David_Haccoun.pdf
