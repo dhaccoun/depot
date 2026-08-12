@@ -1,0 +1,17 @@
+# Documents personnels — dépôt public : ne pas pousser le contenu brut de C:\fincut
+inbox/**
+!inbox/.gitkeep
+*.zip
+*.eml
+*.jpg
+*.jpeg
+*.png
+*.heic
+# Autoriser les livrables agent
+!Fincut_Reponse_SAV_David_Haccoun.docx
+!Fincut_Reponse_SAV_David_Haccoun.pdf
+!GLS_ATTESTATION_remplie_David_Haccoun.docx
+!GLS_ATTESTATION_remplie_David_Haccoun.pdf
+!Reponse_Fincut_Commande_268145.docx
+!Reponse_Fincut_Commande_268145.pdf
+!SYNC-FROM-WINDOWS.ps1
