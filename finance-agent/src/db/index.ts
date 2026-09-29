@@ -40,6 +40,18 @@ CREATE TABLE IF NOT EXISTS account_nicknames (
   notes TEXT,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS imported_transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source_file TEXT NOT NULL,
+  line_no INTEGER NOT NULL,
+  account_name TEXT NOT NULL DEFAULT '',
+  posted_on TEXT NOT NULL,
+  label TEXT NOT NULL,
+  amount REAL NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(source_file, line_no)
+);
 `;
 
 export function getDb(): DatabaseSync {

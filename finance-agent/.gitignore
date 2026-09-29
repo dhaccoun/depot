@@ -9,3 +9,5 @@ data/
 *.db-journal
 .DS_Store
 *.log
+inbox/*
+!inbox/.gitkeep

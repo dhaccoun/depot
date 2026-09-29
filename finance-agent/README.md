@@ -1,65 +1,40 @@
 # finance-agent
 
-Conversational personal finance for Cursor:
+Finances dans le chat Cursor, sans connexion bancaire.
 
-- **Bank data** → [Plaid CLI](https://plaid.com/docs/resources/cli/) (`plaid link`, balances, transactions, …)
-- **Planning memory** → this MCP + local SQLite (goals, monthly notes, category rules, nicknames)
+Déposez un export CSV de la banque dans `inbox/`. Le serveur range les opérations dans une base locale et peut résumer le mois (entrées, sorties, catégories).
 
-No dashboard. Link accounts with the CLI, then plan in chat.
+La page `localhost:8787` « OAuth callback failed / access_denied » ne sert pas ici. Ne la rouvrez pas sur le bureau virtuel de l’agent, et n’y saisissez pas d’identifiants.
 
-Requires Node.js 22+ and the Plaid CLI (`brew install plaid/plaid-cli/plaid`).
+## Démarrage
 
-## Setup
+Node.js 22+.
 
 ```bash
-# Plaid Trial / Production (one-time)
-plaid login
-plaid link --products transactions,liabilities,investments
-
-# This MCP
-cp .env.example .env
+cd finance-agent
 npm install
-npm run build
 ```
 
-Trial plans support up to 10 linked Items.
+Dans Cursor, le fichier `.cursor/mcp.json` à la racine du dépôt lance déjà le serveur.
 
-## Add to Cursor MCP
+1. Depuis le site de la banque, exportez les opérations en CSV.
+2. Copiez le fichier dans `finance-agent/inbox/`.
+3. Dans le chat : « importe le relevé et résume septembre ».
 
-```json
-{
-  "mcpServers": {
-    "finance-agent": {
-      "command": "node",
-      "args": ["/ABSOLUTE/PATH/TO/finance-agent/dist/index.js"],
-      "env": {
-        "DATABASE_PATH": "/ABSOLUTE/PATH/TO/finance-agent/data/planning.db"
-      }
-    }
-  }
-}
-```
+Formats reconnus : séparateur `;` ou `,`, dates `JJ/MM/AAAA` ou `AAAA-MM-JJ`, colonnes Date + Libellé + Débit/Crédit, ou Date + Libellé + Montant. Un exemple est dans `exemples/releve-exemple.csv`.
 
-The MCP shells out to `plaid … -j`, so the CLI must be on `PATH` for the Cursor process.
+Les CSV déposés dans `inbox/` ne sont pas versionnés.
 
-## Tools
+## Outils
 
-| Tool | Source | Purpose |
-|---|---|---|
-| `list_linked_items` | CLI | Linked institutions |
-| `get_balances` | CLI | Live balances |
-| `get_transactions` | CLI | Transactions by date |
-| `get_liabilities` | CLI | Cards/loans detail |
-| `get_investments` | CLI | Holdings |
-| `summarize_cashflow` | CLI + local rules | Monthly planning summary |
-| `list_goals` / `upsert_goal` | SQLite | Persistent goals |
-| `list_plan_notes` / `add_plan_note` | SQLite | Month-to-month notes |
-| `add_category_rule` | SQLite | Merchant → category |
-| `upsert_account_nickname` | SQLite | Friendly account names |
+- `import_statement` — importe un CSV ou tout le dossier `inbox/`
+- `list_statements` — relevés déjà importés
+- `list_imported_transactions` — opérations
+- `summarize_imported` — entrées, sorties, catégories
+- `list_goals` / `upsert_goal` — objectifs
+- `list_plan_notes` / `add_plan_note` — notes du mois
+- `add_category_rule` — un mot du libellé devient une catégorie (ex. CARREFOUR → Courses)
 
-## Link more accounts
+## Banque en ligne, plus tard
 
-```bash
-plaid link --products transactions,liabilities,investments
-plaid item list
-```
+Plaid reste disponible (`get_balances`, `summarize_cashflow`, …) après `plaid login` puis `plaid link` sur votre ordinateur, pas sur la machine virtuelle de l’agent. Tant que cette étape n’est pas faite, utilisez les relevés CSV.

@@ -3,6 +3,14 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { getDb } from "./db/index.js";
 import { summarizeCashflow } from "./finance/cashflow.js";
+import {
+  importInbox,
+  importStatementFile,
+  importStatementText,
+  listImported,
+  listStatementSources,
+  summarizeImported,
+} from "./statements/store.js";
 import { INSTITUTION_NAMES, runPlaid } from "./plaid-cli.js";
 import {
   addCategoryRule,
@@ -19,7 +27,7 @@ getDb();
 
 const server = new McpServer({
   name: "finance-agent",
-  version: "0.2.0",
+  version: "0.3.0",
 });
 
 function json(data: unknown) {
@@ -62,7 +70,111 @@ async function cliOrError(args: string[]) {
   return json(enrichInstitutions(result.data));
 }
 
-// ── Bank data via Plaid CLI ───────────────────────────────────────────────
+// ── Relevés CSV (aucun login bancaire) ───────────────────────────────────
+
+server.tool(
+  "import_statement",
+  "Importe un relevé bancaire CSV déjà exporté par la banque. Sans argument, importe tous les .csv de finance-agent/inbox/. Aucune connexion Plaid ni page OAuth.",
+  {
+    csv_path: z
+      .string()
+      .optional()
+      .describe("Chemin d'un fichier .csv. Ignoré si csv_text est fourni."),
+    csv_text: z
+      .string()
+      .optional()
+      .describe("Contenu CSV collé, à la place d'un fichier."),
+    source_name: z
+      .string()
+      .optional()
+      .describe("Nom du relevé quand le contenu est collé. Défaut : colle.csv"),
+    account_name: z
+      .string()
+      .optional()
+      .describe("Nom du compte, par exemple Compte courant."),
+  },
+  async ({ csv_path, csv_text, source_name, account_name }) => {
+    try {
+      if (csv_text) {
+        return json(
+          importStatementText({
+            text: csv_text,
+            sourceFile: source_name?.trim() || "colle.csv",
+            accountName: account_name,
+          }),
+        );
+      }
+      if (csv_path) {
+        return json(importStatementFile(csv_path, account_name));
+      }
+      const imported = importInbox(account_name);
+      return json({
+        files: imported,
+        message: imported.length
+          ? null
+          : "Aucun CSV dans finance-agent/inbox/. Exportez le relevé depuis la banque (CSV) et déposez-le dans ce dossier.",
+      });
+    } catch (error) {
+      return errorResult(error);
+    }
+  },
+);
+
+server.tool(
+  "list_statements",
+  "Liste les relevés CSV déjà importés (fichier, compte, nombre d'opérations, période).",
+  {},
+  async () => {
+    try {
+      return json(listStatementSources());
+    } catch (error) {
+      return errorResult(error);
+    }
+  },
+);
+
+server.tool(
+  "list_imported_transactions",
+  "Liste les opérations importées depuis les relevés CSV, avec la catégorie locale.",
+  {
+    start_date: z.string().optional().describe("YYYY-MM-DD"),
+    end_date: z.string().optional().describe("YYYY-MM-DD"),
+    limit: z.number().int().min(1).max(500).optional(),
+  },
+  async ({ start_date, end_date, limit }) => {
+    try {
+      return json(
+        listImported({
+          startDate: start_date,
+          endDate: end_date,
+          limit,
+        }),
+      );
+    } catch (error) {
+      return errorResult(error);
+    }
+  },
+);
+
+server.tool(
+  "summarize_imported",
+  "Résume entrées, sorties et catégories à partir des relevés CSV importés. À utiliser tant qu'aucune banque n'est reliée.",
+  {
+    start_date: z.string().optional().describe("YYYY-MM-DD"),
+    end_date: z.string().optional().describe("YYYY-MM-DD"),
+  },
+  async ({ start_date, end_date }) => {
+    try {
+      return json(
+        summarizeImported({ startDate: start_date, endDate: end_date }),
+      );
+    } catch (error) {
+      return errorResult(error);
+    }
+  },
+);
+
+// ── Bank data via Plaid CLI (optionnel) ──────────────────────────────────
 
 server.tool(
   "list_linked_items",
@@ -273,27 +385,26 @@ server.tool(
 
 server.tool(
   "setup_help",
-  "Explain how banking (Plaid CLI) and planning memory (this MCP) work together.",
+  "Explique le démarrage par relevé CSV, sans login bancaire ni page OAuth.",
   {},
   async () =>
     json({
+      demarrage:
+        "Aucun login bancaire. Déposer un export CSV dans finance-agent/inbox/ puis appeler import_statement et summarize_imported.",
+      oauth:
+        "La page localhost:8787 « OAuth callback failed / access_denied » est un refus de consentement Cursor. Elle ne relie pas la banque. Ne pas la rouvrir sur le bureau virtuel de l'agent.",
       architecture: {
-        bank_data: "Plaid CLI (link, balances, transactions, investments, liabilities)",
+        releves: "CSV local dans inbox/ + SQLite",
         planning_memory:
-          "This MCP + local SQLite (goals, monthly notes, category rules, nicknames)",
+          "SQLite (objectifs, notes, règles de catégories, surnoms)",
+        banque_en_ligne:
+          "Optionnel, plus tard, sur l'ordinateur de l'utilisateur : plaid login puis plaid link",
       },
-      link_accounts: [
-        "plaid login",
-        "plaid link --products transactions,liabilities,investments",
-        "Trial plan: up to 10 Items",
-      ],
-      agent_bank_tools: [
-        "list_linked_items",
-        "get_balances",
-        "get_transactions",
-        "get_liabilities",
-        "get_investments",
-        "summarize_cashflow",
+      agent_statement_tools: [
+        "import_statement",
+        "list_statements",
+        "list_imported_transactions",
+        "summarize_imported",
       ],
       agent_planning_tools: [
         "list_goals / upsert_goal",
@@ -301,12 +412,7 @@ server.tool(
         "add_category_rule",
         "upsert_account_nickname",
       ],
-      example_prompts: [
-        "What are my balances and card utilization right now?",
-        "Summarize cashflow for this month and suggest a plan for the rest of July.",
-        "Save a note for 2026-07: keep dining under $400 and put $800 toward Amex.",
-        "Create a goal to pay the Chase card under $200 by September.",
-      ],
+      exemple: "finance-agent/exemples/releve-exemple.csv",
     }),
 );
 

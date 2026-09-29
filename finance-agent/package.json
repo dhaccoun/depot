@@ -1,15 +1,16 @@
 {
   "name": "finance-agent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "MCP planning memory + Plaid CLI bank data for conversational personal finance",
+  "description": "MCP finance : relevés CSV locaux, mémoire de planification, Plaid en option",
   "type": "module",
   "scripts": {
     "build": "tsc",
     "postinstall": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "db:init": "tsx src/db/init.ts"
+    "db:init": "tsx src/db/init.ts",
+    "test": "tsx --test src/statements/*.test.ts"
   },
   "engines": {
     "node": ">=22"
