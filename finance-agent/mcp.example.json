@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "finance-agent": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/finance-agent/dist/index.js"],
+      "env": {
+        "DATABASE_PATH": "/ABSOLUTE/PATH/TO/finance-agent/data/planning.db"
+      }
+    }
+  }
+}

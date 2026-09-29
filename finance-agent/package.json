@@ -1,0 +1,28 @@
+{
+  "name": "finance-agent",
+  "version": "0.3.0",
+  "private": true,
+  "description": "MCP finance : relevés CSV locaux, mémoire de planification, Plaid en option",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "postinstall": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "db:init": "tsx src/db/init.ts",
+    "test": "tsx --test src/statements/*.test.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  }
+}
