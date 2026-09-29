@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "finance-agent": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${workspaceFolder}/finance-agent/dist/index.js"],
+      "env": {
+        "DATABASE_PATH": "${workspaceFolder}/finance-agent/data/planning.db"
+      }
+    }
+  }
+}
